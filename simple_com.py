@@ -42,11 +42,7 @@ def BasicRelease(self, *args):
 def create_c_callable(func, types, keepalive=[]):
     func_type = ctypes.WINFUNCTYPE(*types)
     c_callable = func_type(func)
-    # Dirty, but other methods require native code execution
-    if windows.current_process.bitness == 32:
-        c_callback_addr = ctypes.c_ulong.from_address(id(c_callable._objects['0']) + 3 * ctypes.sizeof(ctypes.c_void_p)).value
-    else:
-        c_callback_addr = ctypes.c_ulonglong.from_address(id(c_callable._objects['0']) + 3 * ctypes.sizeof(ctypes.c_void_p)).value
+    c_callback_addr = ctypes.cast(c_callable, ctypes.c_void_p)
     keepalive.append(c_callable)
     return c_callback_addr
 
