@@ -3,7 +3,7 @@ import ctypes
 import codecs
 import windows
 import windows.native_exec.simple_x64 as x64
-from generated_def.winstructs import *
+from .generated_def.winstructs import *
 
 # Special code for syswow64 process
 CS_32bits = 0x23
@@ -18,7 +18,7 @@ def genere_return_32bits_stub(ret_addr):
     return ret_32b.get_code()
 
 # The format of a jump to 64bits mode
-dummy_jump = "\xea" + struct.pack("<I", 0) + chr(CS_64bits) + "\x00\x00"
+dummy_jump = b"\xea" + struct.pack("<I", 0) + bytes([CS_64bits]) + b"\x00\x00"
 
 
 def execute_64bits_code_from_syswow(shellcode):

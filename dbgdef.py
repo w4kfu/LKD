@@ -36,7 +36,7 @@ DEBUG_ATTACH_LOCAL_KERNEL = 1
 DEBUG_END_PASSIVE = 0
 DEBUG_END_ACTIVE_DETACH = 0x00000002
 
-SE_DEBUG_NAME          = "SeDebugPrivilege"
+SE_DEBUG_NAME          = b"SeDebugPrivilege"
 
 DEBUG_DATA_KPCR_OFFSET                          = 0
 DEBUG_DATA_KPRCB_OFFSET                         = 1

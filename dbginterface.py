@@ -176,7 +176,7 @@ def EmulateWinDBGName(hModule, lpFilename, nSize, real_function):
     v = (c_char * 100).from_address(ptr_addr)
     path = "C:\\windbg.exe"
     path_wchar = "\x00".join(path) + "\x00\x00\x00"
-    v[0:len(path_wchar)] = path_wchar
+    v[0:len(path_wchar)] = path_wchar.encode()
     return len(path_wchar)
 
 
@@ -252,14 +252,14 @@ class LocalKernelDebuggerBase(object):
             raise WinError(res)
 
     def _load_debug_dll(self):
-        self.hmoduledbghelp = winproxy.LoadLibraryA(self.DEBUG_DLL_PATH + "dbghelp.dll")
-        self.hmoduledbgeng = winproxy.LoadLibraryA(self.DEBUG_DLL_PATH + "dbgeng.dll")
-        self.hmodulesymsrv = winproxy.LoadLibraryA(self.DEBUG_DLL_PATH + "symsrv.dll")
+        self.hmoduledbghelp = winproxy.LoadLibraryA((self.DEBUG_DLL_PATH + "dbghelp.dll").encode())
+        self.hmoduledbgeng = winproxy.LoadLibraryA((self.DEBUG_DLL_PATH + "dbgeng.dll").encode())
+        self.hmodulesymsrv = winproxy.LoadLibraryA((self.DEBUG_DLL_PATH + "symsrv.dll").encode())
 
     def _do_debug_create(self):
         DebugClient = IDebugClient(0)
 
-        DebugCreateAddr = winproxy.GetProcAddress(self.hmoduledbgeng, "DebugCreate")
+        DebugCreateAddr = winproxy.GetProcAddress(self.hmoduledbgeng, b"DebugCreate")
         DebugCreate = WINFUNCTYPE(HRESULT, PVOID, PVOID)(DebugCreateAddr)
         DebugCreate(IID_IDebugClient, byref(DebugClient))
         return DebugClient
@@ -283,6 +283,7 @@ class LocalKernelDebuggerBase(object):
             symbol_path = os.environ['_NT_SYMBOL_PATH']
         except KeyError:
             symbol_path = self.DEFAULT_SYMBOL_PATH
+        symbol_path = symbol_path.encode()
         self.DebugSymbols.SetSymbolPath(symbol_path)
         self.DebugSymbols.SetSymbolOption(self.SYMBOL_OPT)
 
@@ -377,7 +378,7 @@ class LocalKernelDebuggerBase(object):
 
     def _get_kldbgdrv_handle(self):
         if not hasattr(self, "_kldbgdrv_handle"):
-            self._kldbgdrv_handle = windows.winproxy.CreateFileA("\\\\.\\kldbgdrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ)
+            self._kldbgdrv_handle = windows.winproxy.CreateFileA(b"\\\\.\\kldbgdrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ)
         return self._kldbgdrv_handle
 
     # Actual Interface
@@ -389,7 +390,7 @@ class LocalKernelDebuggerBase(object):
         if to_string:
             old_output = self._output_callback
             self._init_string_output_callback()
-        self.DebugControl.Execute(0, str, 0)
+        self.DebugControl.Execute(0, str.encode(), 0)
         if to_string:
             if old_output is None:
                 old_output = self._standard_output_callback
@@ -399,7 +400,7 @@ class LocalKernelDebuggerBase(object):
 
     def _standard_output_callback(self, x, y, msg):
         if not self.quiet:
-            print msg,
+            print(msg),
         return 0
 
     def _init_string_output_callback(self):
@@ -452,7 +453,7 @@ class LocalKernelDebuggerBase(object):
 
     def reload(self, module_to_reload=""):
         """Reload a module or all modules if **module_to_reload** is not specified"""
-        return self.DebugSymbols.Reload(module_to_reload)
+        return self.DebugSymbols.Reload(module_to_reload.encode())
 
     def detach(self):
         """End the Debugging session and detach the COM interface"""
@@ -737,6 +738,7 @@ class LocalKernelDebuggerBase(object):
         :param name: Name of the symbol
         :type name: str
         :rtype: int"""
+        name = name.encode()
         SymbolLocation = ctypes.c_uint64(0)
         try:
             self.DebugSymbols.GetOffsetByName(name, ctypes.byref(SymbolLocation))
@@ -969,7 +971,6 @@ class LocalKernelDebuggerBase(object):
         """Get the physical address of a virtual one"""
         virtual = self.resolve_symbol(virtual)
         res = ULONG64(0)
-
         self.DebugDataSpaces.VirtualToPhysical(c_uint64(virtual), byref(res))
         return res.value
 
@@ -1255,10 +1256,10 @@ class LocalKernelDebugger32(LocalKernelDebuggerBase):
         return None
 
     @require_upgraded_driver
-    def alloc_memory(self, size=0x1000, type=0, tag=0x45544942):
+    def alloc_memory(self, size=0x1000, pooltype=0, tag=0x45544942):
         """Allocation <size> of NonPaged kernel memory"""
         h = self._get_kldbgdrv_handle()
-        buffer = struct.pack("<III", type, size, tag)
+        buffer = struct.pack("<III", pooltype, size, tag)
         res = DWORD(0x44444444)
         windows.winproxy.DeviceIoControl(h, DU_MEMALLOC_IOCTL, buffer, len(buffer), byref(res), 4)
         return res.value
@@ -1307,10 +1308,10 @@ class LocalKernelDebugger64(LocalKernelDebuggerBase):
         return addr
 
     @require_upgraded_driver
-    def alloc_memory(self, size=0x1000, type=0, tag=0x45544942):
+    def alloc_memory(self, size=0x1000, pooltype=0, tag=0x45544942):
         """Allocation <size> of NonPaged kernel memory"""
         h = self._get_kldbgdrv_handle()
-        buffer = struct.pack("<QQQ", type, size, tag)
+        buffer = struct.pack("<QQQ", pooltype, size, tag)
         res = c_uint64(0x44444444)
         windows.winproxy.DeviceIoControl(h, DU_MEMALLOC_IOCTL, buffer, len(buffer), byref(res), sizeof(res))
         return res.value

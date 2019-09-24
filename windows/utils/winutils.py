@@ -123,16 +123,16 @@ def check_debug():
     cbsize = DWORD(1024)
     bufferres = (c_char * cbsize.value)()
 
-    winproxy.RegOpenKeyExA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control", 0, KEY_READ, byref(hkresult))
-    winproxy.RegGetValueA(hkresult, None, "SystemStartOptions", RRF_RT_REG_SZ, None, byref(bufferres), byref(cbsize))
+    winproxy.RegOpenKeyExA(HKEY_LOCAL_MACHINE, b"System\\CurrentControlSet\\Control", 0, KEY_READ, byref(hkresult))
+    winproxy.RegGetValueA(hkresult, None, b"SystemStartOptions", RRF_RT_REG_SZ, None, byref(bufferres), byref(cbsize))
     winproxy.RegCloseKey(hkresult)
 
     control = bufferres[:]
-    if "DEBUG" not in control:
+    if b"DEBUG" not in control:
         # print "[-] Enable debug boot!"
         # print "> bcdedit /debug on"
         return False
-    if "DEBUG=NOUMEX" not in control:
+    if b"DEBUG=NOUMEX" not in control:
         pass
         # print "[*] Warning noumex not set!"
         # print "> bcdedit /set noumex on"

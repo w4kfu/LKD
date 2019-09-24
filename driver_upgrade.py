@@ -172,14 +172,14 @@ class DriverUpgrader32(DriverUpgrader):
         upgrade += x86.Jmp(':LOOP')
 
         # Write new driver code
-        self.kdbg.write_pfv_memory(kldbgdrv + self.init_function_offset, str(upgrade.get_code()))
+        self.kdbg.write_pfv_memory(kldbgdrv + self.init_function_offset, upgrade.get_code())
         # Write first array dest
         self.write_pfv_ptr(kldbgdrv + self.HANDLE_ARRAY_ADDR, kldbgdrv + self.FIRST_ARRAY_ADDR)
         self.write_pfv_ptr(kldbgdrv + self.FIRST_ARRAY_ADDR, 0)
         self.write_pfv_ptr(kldbgdrv + self.FIRST_ARRAY_ADDR + 4, 0)
         # Jump hijack
         jump_init_function = x86.Jmp(self.init_function_offset - (self.hijack_offset))
-        self.kdbg.write_pfv_memory(kldbgdrv + self.hijack_offset, str(jump_init_function.get_code()))
+        self.kdbg.write_pfv_memory(kldbgdrv + self.hijack_offset, jump_init_function.get_code())
 
         self.is_upgraded = True
         self.ioctl_array = kldbgdrv + self.FIRST_ARRAY_ADDR
@@ -430,15 +430,14 @@ class DriverUpgrader64(DriverUpgrader):
         upgrade +=      x64.Add('RAX', 0x10)
         upgrade += x64.Jmp(':LOOP')
 
-        self.kdbg.write_pfv_memory(kldbgdrv + self.init_driver_offset, str(upgrade.get_code()))
+        self.kdbg.write_pfv_memory(kldbgdrv + self.init_driver_offset, upgrade.get_code())
         # Write first array dest
         self.write_pfv_ptr(kldbgdrv + self.HANDLE_ARRAY_ADDR, kldbgdrv + self.FIRST_ARRAY_ADDR)
         self.write_pfv_ptr(kldbgdrv + self.FIRST_ARRAY_ADDR, 0)
         self.write_pfv_ptr(kldbgdrv + self.FIRST_ARRAY_ADDR + 8, 0)
         # Jump hijack
         jump_init_function = x64.Jmp(self.init_driver_offset - (self.hijack_offset))
-        self.kdbg.write_pfv_memory(kldbgdrv + self.hijack_offset, str(jump_init_function.get_code()))
-
+        self.kdbg.write_pfv_memory(kldbgdrv + self.hijack_offset, jump_init_function.get_code())
         self.ioctl_array = kldbgdrv + self.FIRST_ARRAY_ADDR
         self.ioctl_array_ptr = kldbgdrv + self.HANDLE_ARRAY_ADDR
         self.next_code_addr = kldbgdrv + self.init_driver_offset + len(upgrade.get_code())
@@ -490,6 +489,7 @@ class DriverUpgrader64(DriverUpgrader):
         INPUT_BUFFER_ALLOC_TAG = x64.mem('[RCX + 0x10]')
 
         Alloc_IOCTL = x64.MultipleInstr()
+        Alloc_IOCTL += x64.Sub('Rsp', 0x28)
         Alloc_IOCTL += x64.Cmp(self.IO_STACK_INPUT_BUFFER_LEN, 0x18)
         Alloc_IOCTL += x64.Jnz(':FAIL')
         Alloc_IOCTL += x64.Mov('RCX', self.IO_STACK_INPUT_BUFFER)
@@ -501,9 +501,11 @@ class DriverUpgrader64(DriverUpgrader):
         Alloc_IOCTL += x64.Mov('RBX', self.IRP_OUTPUT_BUFFER)
         Alloc_IOCTL += x64.Mov(x64.mem('[RBX]'), 'RAX')
         Alloc_IOCTL += x64.Xor('RAX', 'RAX')
+        Alloc_IOCTL += x64.Add('Rsp', 0x28)
         Alloc_IOCTL += x64.Ret()
         Alloc_IOCTL += x64.Label(":FAIL")
         Alloc_IOCTL += x64.Mov('RAX', 0x0C000000D)
+        Alloc_IOCTL += x64.Add('Rsp', 0x28)
         Alloc_IOCTL += x64.Ret()
 
         self.upgrade_driver_add_new_ioctl_handler(DU_MEMALLOC_IOCTL, Alloc_IOCTL.get_code())
@@ -511,6 +513,7 @@ class DriverUpgrader64(DriverUpgrader):
     def register_kernel_call(self):
         # expect in buffer: the address to call and all dword to push on the stack
         CCall_IOCTL = x64.MultipleInstr()
+        CCall_IOCTL += x64.Sub('Rsp', 0x28)
         CCall_IOCTL += x64.Mov('RAX', self.IO_STACK_INPUT_BUFFER_LEN)
         CCall_IOCTL += x64.Cmp('RAX', 0)
         CCall_IOCTL += x64.Jz(":FAIL")  # Need at least the function to call
@@ -557,9 +560,11 @@ class DriverUpgrader64(DriverUpgrader):
         CCall_IOCTL += x64.Mov(x64.mem('[RDX]'), 'RAX')
         CCall_IOCTL += x64.Xor('RAX', 'RAX')
         CCall_IOCTL += x64.Add('RSP', 'R15')
+        CCall_IOCTL += x64.Add('Rsp', 0x28)
         CCall_IOCTL += x64.Ret()
         CCall_IOCTL += x64.Label(":FAIL")
         CCall_IOCTL += x64.Mov('RAX', 0x0C000000D)
+        CCall_IOCTL += x64.Add('Rsp', 0x28)
         CCall_IOCTL += x64.Ret()
         self.upgrade_driver_add_new_ioctl_handler(DU_KCALL_IOCTL, CCall_IOCTL.get_code())
 

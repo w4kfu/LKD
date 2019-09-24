@@ -73,7 +73,7 @@ class Prefix(object):
         return type(self)(other)
 
     def get_code(self):
-        return chr(self.PREFIX_VALUE) + self.next.get_code()
+        return bytes([self.PREFIX_VALUE]) + self.next.get_code()
 
 
 def create_prefix(name, value):
@@ -480,6 +480,11 @@ class Instruction(object):
     """Base class of instructions, use `encoding` to find a valid way to assemble the instruction"""
     encoding = []
 
+    def __new__(cls,*args, **kwargs):
+        cls._inst = super(Instruction, cls).__new__(cls)
+        cls._inst.__init__(*args)
+        return cls._inst
+
     def __init__(self, *initial_args):
         for type_encoding in self.encoding:
             args = list(initial_args)
@@ -500,7 +505,7 @@ class Instruction(object):
         raise ValueError("Cannot encode <{0} {1}>:(".format(type(self).__name__, initial_args))
 
     def get_code(self):
-        prefix_opcode = b"".join(chr(p.PREFIX_VALUE) for p in self.prefix)
+        prefix_opcode = b"".join(bytes([p.PREFIX_VALUE]) for p in self.prefix)
         return prefix_opcode + bytes(self.value.dump())
 
 
@@ -619,6 +624,9 @@ class Movsb(Instruction):
 
 class Movsd(Instruction):
     encoding = [(RawBits.from_int(8, 0xa5),)]
+
+class Stosb(Instruction):
+    encoding = [(RawBits.from_int(8, 0xaa),)]
 
 
 class Lea(Instruction):

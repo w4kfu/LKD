@@ -1,14 +1,16 @@
 import struct
 import ctypes
 import functools
-from ctypes.wintypes import HRESULT
+from ctypes import HRESULT
+
+import windows
 
 # Simple Abstraction to call COM interface in Python (Python -> COM)
 IID_PACK = "<I", "<H", "<H", "<B", "<B", "<B", "<B", "<B", "<B", "<B", "<B"
 
 
 def get_IID_from_raw(raw):
-    return "".join([struct.pack(i, j) for i, j in zip(IID_PACK, raw)])
+    return b"".join([struct.pack(i, j) for i, j in zip(IID_PACK, raw)])
 
 
 class COMInterface(ctypes.c_void_p):
@@ -41,7 +43,10 @@ def create_c_callable(func, types, keepalive=[]):
     func_type = ctypes.WINFUNCTYPE(*types)
     c_callable = func_type(func)
     # Dirty, but other methods require native code execution
-    c_callback_addr = ctypes.c_ulong.from_address(id(c_callable._objects['0']) + 3 * ctypes.sizeof(ctypes.c_void_p)).value
+    if windows.current_process.bitness == 32:
+        c_callback_addr = ctypes.c_ulong.from_address(id(c_callable._objects['0']) + 3 * ctypes.sizeof(ctypes.c_void_p)).value
+    else:
+        c_callback_addr = ctypes.c_ulonglong.from_address(id(c_callable._objects['0']) + 3 * ctypes.sizeof(ctypes.c_void_p)).value
     keepalive.append(c_callable)
     return c_callback_addr
 

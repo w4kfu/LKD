@@ -84,7 +84,7 @@ class Prefix(object):
         return type(self)(other)
 
     def get_code(self):
-        return chr(self.PREFIX_VALUE) + self.next.get_code()
+        return bytes([self.PREFIX_VALUE]) + self.next.get_code()
 
 
 def create_prefix(name, value):
@@ -105,12 +105,12 @@ AddressSizeOverride = create_prefix('AddressSizeOverride', 0x67)
 
 mem_access = collections.namedtuple('mem_access', ['base', 'index', 'scale', 'disp', 'prefix'])
 
-reg_order = ['RAX', 'RCX', 'RDX', 'RBX', 'RSP', 'RBP', 'RSI', 'RDI']
-new_reg_order = ['R8', 'R9', 'R10', 'R11', 'R12', 'R13', 'R14', 'R15']
+reg_order = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"]
+new_reg_order = ["R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"]
 x64_regs = reg_order + new_reg_order
 
-x64_segment_selectors = {'CS': CSPrefix, 'DS': DSPrefix, 'ES': ESPrefix, 'SS': SSPrefix,
-                         'FS': FSPrefix, 'GS': GSPrefix}
+x64_segment_selectors = {"CS": CSPrefix, "DS": DSPrefix, "ES": ESPrefix, "SS": SSPrefix,
+                         "FS": FSPrefix, "GS": GSPrefix}
 
 
 class X64(object):
@@ -577,6 +577,11 @@ class Instruction(object):
     encoding = []
     default_rex = BitArray(8, "")
 
+    def __new__(cls,*args, **kwargs):
+        cls._inst = super(Instruction, cls).__new__(cls)
+        cls._inst.__init__(*args)
+        return cls._inst
+
     def __init__(self, *initial_args):
         for type_encoding in self.encoding:
             args = list(initial_args)
@@ -604,7 +609,7 @@ class Instruction(object):
         raise ValueError("Cannot encode <{0} {1}>:(".format(type(self).__name__, initial_args))
 
     def get_code(self):
-        prefix_opcode = b"".join(chr(p.PREFIX_VALUE) for p in self.prefix)
+        prefix_opcode = b"".join(bytes([p.PREFIX_VALUE]) for p in self.prefix)
         return prefix_opcode + bytes(self.value.dump())
 
 
@@ -748,7 +753,7 @@ class Jnb(JmpType):
 
 
 class Lea(Instruction):
-    refuse_reverse = True
+    default_32_bits = True
     encoding = [(RawBits.from_int(8, 0x8d), ModRM([ModRM_REG64__MEM], accept_reverse=False, has_direction_bit=False))]
 
 

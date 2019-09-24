@@ -105,9 +105,9 @@ def get_functions():
     version = sys.version_info
     python_dll = "python" + str(version.major) + str(version.minor)
 
-    PyGILState_Ensure = windows.utils.get_func_addr(python_dll, 'PyGILState_Ensure'.encode())
-    PyObject_CallObject = windows.utils.get_func_addr(python_dll, 'PyObject_CallObject'.encode())
-    PyGILState_Release = windows.utils.get_func_addr(python_dll, 'PyGILState_Release'.encode())
+    PyGILState_Ensure = windows.utils.get_func_addr(python_dll, 'PyGILState_Ensure')
+    PyObject_CallObject = windows.utils.get_func_addr(python_dll, 'PyObject_CallObject')
+    PyGILState_Release = windows.utils.get_func_addr(python_dll, 'PyGILState_Release')
     return [PyGILState_Ensure, PyObject_CallObject, PyGILState_Release]
 
 
