@@ -759,8 +759,12 @@ class Lea(Instruction):
 
 class Mov(Instruction):
     default_32_bits = True
-    encoding = [(Mov_RAX_OFF64(),), (Mov_OFF64_RAX(),), (RawBits.from_int(8, 0x89), ModRM([ModRM_REG64__REG64, ModRM_REG64__MEM])),
-                (RawBits.from_int(5, 0xb8 >> 3), X64RegisterSelector(), Imm64())]
+    encoding = [(Mov_RAX_OFF64(),),
+                (Mov_OFF64_RAX(),),
+                (RawBits.from_int(8, 0x89), ModRM([ModRM_REG64__REG64, ModRM_REG64__MEM])),
+                (RawBits.from_int(5, 0xb8 >> 3), X64RegisterSelector(), Imm64()),
+                (RawBits.from_int(8, 0xC7), Slash(0), Imm32())
+                ]
 
 
 class Cmp(Instruction):
@@ -790,6 +794,12 @@ class Retf32(Instruction):
 
 class _NopArtifact(Nop):
     pass
+
+class Raw(Instruction):
+    def __init__(self, initial_args):
+        self.data = bytes.fromhex(initial_args.replace(" ", ""))
+    def get_code(self):
+        return self.data
 
 
 def JmpAt(addr):

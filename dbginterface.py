@@ -404,7 +404,7 @@ class LocalKernelDebuggerBase(object):
         return 0
 
     def _init_string_output_callback(self):
-        self._output_string = ""
+        self._output_string = b""
         self.set_output_callbacks(self._string_output_callback)
 
     def _string_output_callback(self, x, y, msg):
@@ -507,7 +507,7 @@ class LocalKernelDebuggerBase(object):
         :rtype: int"""
         module = self.resolve_symbol(module)
         res = ULONG(0)
-
+        type_name = type_name.encode()
         self.DebugSymbols.GetTypeId(self.expand_address_to_ulong64(module), type_name, byref(res))
         return res.value
 
@@ -529,7 +529,7 @@ class LocalKernelDebuggerBase(object):
         :rtype: int"""
         module, typeid = self.resolve_type(module, typeid)
         res = ULONG(0)
-
+        field = field.encode()
         self.DebugSymbols.GetFieldOffset(module, typeid, field, byref(res))
         return res.value
 
