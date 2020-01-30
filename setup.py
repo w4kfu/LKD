@@ -28,7 +28,7 @@ setup(
     license = 'BSD',
     keywords = 'dbgengine python',
     url = 'https://github.com/sogeti-esec-lab/LKD',
-    py_modules= ['dbginterface', 'dbgdef', 'driver_upgrade', 'resource_emulation', 'simple_com'],
+    py_modules= ['dbginterface', 'dbgdef', 'dbgtype', 'driver_upgrade', 'resource_emulation', 'simple_com'],
     packages = ['windows', 'windows/generated_def', 'windows/native_exec', 'windows/utils'],
     data_files=[('bin', SETUP_DATA_FILES), ('bin/DBGDLL', SETUP_DATA_FILES_32), 
         ('bin/DBGDLL64',SETUP_DATA_FILES_64)],
