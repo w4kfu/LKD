@@ -1165,8 +1165,9 @@ PSYSTEM_MODULE32 = POINTER(_SYSTEM_MODULE32)
 # Struct _SYSTEM_MODULE64 definitions
 class _SYSTEM_MODULE64(Structure):
         _fields_ = [
-        ("Reserved", ULONG * 4),
-        ("Base", ULONG64),
+        ("Section", HANDLE),
+        ("MappedBase", ULONG64),
+        ("ImageBase", ULONG64),
         ("Size", ULONG),
         ("Flags", ULONG),
         ("Index", USHORT),
