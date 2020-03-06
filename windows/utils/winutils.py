@@ -158,7 +158,7 @@ def get_kernel_modules():
     raw_buffer = (cbsize.value * c_char)()
     buffer = SYSTEM_MODULE_INFORMATION.from_address(ctypes.addressof(raw_buffer))
     winproxy.NtQuerySystemInformation(SystemModuleInformation, byref(raw_buffer), sizeof(raw_buffer), byref(cbsize))
-    modules = (SYSTEM_MODULE * buffer.ModulesCount).from_address(addressof(buffer) + SYSTEM_MODULE_INFORMATION.Modules.offset)
+    modules = (SYSTEM_MODULE * buffer.ModulesCount).from_buffer(raw_buffer, SYSTEM_MODULE_INFORMATION.Modules.offset)
     return list(modules)
 
 
