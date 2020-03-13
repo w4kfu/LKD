@@ -584,7 +584,7 @@ class LocalKernelDebuggerBase(object):
         module, typeid = self.resolve_type(module, typeid)
         fieldtypeid = ULONG(0)
         fieldoffset = ULONG(0)
-
+        fieldname = fieldname.encode()
         self.DebugSymbols.GetFieldTypeAndOffset(module, typeid, fieldname, byref(fieldtypeid), byref(fieldoffset))
         return fieldtypeid.value, fieldoffset.value
 
@@ -777,7 +777,7 @@ class LocalKernelDebuggerBase(object):
         buffer = (c_char * buffer_size)()
         match_size = ULONG()
         symbol_addr = ULONG64()
-
+        symbol_pattern = symbol_pattern.encode()
         self.DebugSymbols.StartSymbolMatch(symbol_pattern, byref(search_handle))
         while True:
             try:
